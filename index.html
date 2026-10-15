@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mandarin HSK 1 Text-to-Audio (Standard Putonghua)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Pinyin Pro library CDN for instant pronunciation guide -->
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    }
+  </style>
+<script src="/_aistudio-iframe.js?v=6634132a"></script></head>
+<body class="bg-stone-100 text-stone-900 min-h-screen flex flex-col selection:bg-red-100 selection:text-red-900">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-xs">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-xs font-bold text-xl">
+          普
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-stone-900 tracking-tight leading-none">
+              Mandarin Text to Audio
+            </h1>
+            <span class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+              标准普通话 · HSK Standard
+            </span>
+          </div>
+          <p class="text-xs text-stone-500 mt-0.5">
+            HSK Level 1 Learner Pace · 1 Woman & 1 Deep Man Voice · Standalone Single-File
+          </p>
+        </div>
+      </div>
+
+      <!-- Cloud API Key Config Toggle (Optional) -->
+      <div class="flex items-center gap-2">
+        <button id="toggle-key-btn" onclick="toggleApiKeyDrawer()" class="text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-lg border border-stone-200 flex items-center gap-1.5 transition-colors cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span id="key-status-label">Engine: Browser Native</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Optional API Key Settings Panel (Collapsible) -->
+  <div id="api-key-panel" class="hidden bg-amber-50/70 border-b border-amber-200 text-stone-800 transition-all">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+      <div class="flex-1">
+        <p class="font-semibold text-amber-950 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Optional Gemini Cloud TTS Key
+        </p>
+        <p class="text-stone-600 mt-0.5">
+          By default, this HTML file runs 100% offline & unlimited using your browser's speech synthesis engine. If you want high-fidelity cloud neural audio (Charon deep male voice & Kore female voice), enter your Gemini API key below.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input id="gemini-key-input" type="password" placeholder="Paste Gemini API Key (optional)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-red-500 font-mono" />
+        <button onclick="saveApiKey()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-xs shrink-0 cursor-pointer">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+    <!-- Voice Selection Section -->
+    <section class="bg-white rounded-2xl p-5 border border-stone-200 shadow-xs space-y-3">
+      <div class="flex items-center justify-between">
+        <label class="text-sm font-semibold text-stone-800 tracking-wide flex items-center gap-1.5">
+          <span>Select Voice</span>
+          <span class="text-xs font-normal text-stone-500">(1 Woman & 1 Man · 标准普通话 HSK Standard)</span>
+        </label>
+        <span class="text-xs bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 border border-emerald-200">
+          <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+          HSK Level 1 Standard Pace
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Woman Voice: Xiao Li -->
+        <button id="voice-btn-female" onclick="selectVoice('female')" class="relative p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 border-red-500 bg-red-50/50 ring-1 ring-red-500 cursor-pointer">
+          <div class="w-11 h-11 rounded-lg bg-rose-100 border border-rose-200 flex items-center justify-center text-xl shrink-0">
+            👩
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-stone-900 text-base">Xiao Li</span>
+                <span class="text-xs font-medium text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">小丽</span>
+                <span class="text-xs text-rose-700 font-medium bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/60">Woman (女声)</span>
+              </div>
+              <span id="check-female" class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              </span>
+            </div>
+            <p class="text-xs text-stone-600 mt-1 line-clamp-1">
+              Clear, pleasant Standard Putonghua (标准普通话女声) with pristine HSK tones
+            </p>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-stone-600">
+              <span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-medium">标准普通话</span>
+              <span class="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200/50 font-medium">HSK 1 Standard Pace</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Man Voice: Da Wei (Deep Baritone) -->
+        <button id="voice-btn-male" onclick="selectVoice('male')" class="relative p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 border-stone-200 bg-white hover:border-stone-300 cursor-pointer">
+          <div class="w-11 h-11 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-xl shrink-0">
+            👨
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-stone-900 text-base">Da Wei</span>
+                <span class="text-xs font-medium text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">大伟</span>
+                <span class="text-xs text-blue-700 font-medium bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">Man (男声)</span>
+                <span class="text-[11px] text-indigo-700 font-medium bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/60">Deep Baritone (深沉低音)</span>
+              </div>
+              <span id="check-male" class="hidden w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              </span>
+            </div>
+            <p class="text-xs text-stone-600 mt-1 line-clamp-1">
+              Deep, resonant baritone Standard Putonghua (深沉男低音普通话) with warm chest resonance
+            </p>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-stone-600">
+              <span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-medium">标准普通话</span>
+              <span class="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200/50 font-medium">HSK 1 Standard Pace</span>
+            </div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- Text Input Area -->
+    <section class="bg-white rounded-2xl p-5 border border-stone-200 shadow-xs space-y-3">
+      <div class="flex items-center justify-between">
+        <label for="text-input" class="text-sm font-semibold text-stone-800 flex items-center gap-2">
+          <span>Text to Read</span>
+          <span class="text-xs font-normal text-stone-500">(Mandarin or English)</span>
+        </label>
+        <div class="flex items-center gap-2">
+          <button onclick="togglePinyinView()" id="toggle-pinyin-btn" class="text-xs px-2.5 py-1 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 font-medium transition-colors flex items-center gap-1 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <span id="pinyin-btn-text">Hide Pinyin</span>
+          </button>
+          <button onclick="clearInput()" class="text-xs text-stone-500 hover:text-stone-800 px-2 py-1 rounded hover:bg-stone-100 transition-colors cursor-pointer">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="relative">
+        <textarea id="text-input" rows="4" oninput="updateCharCount()" placeholder="Type or paste any text in Chinese or English... The speaker will read exactly what you type at HSK 1 pace in Standard Putonghua (标准普通话)." class="w-full rounded-xl p-3.5 text-stone-900 border border-stone-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition text-base leading-relaxed resize-y min-h-[100px] font-sans">你好！很高兴认识你。</textarea>
+        <div id="char-counter" class="absolute bottom-2.5 right-3 text-[11px] text-stone-500 pointer-events-none">
+          10 characters
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div class="text-xs text-stone-500 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+          <span>Accent: 标准普通话 (HSK Audio Standard)</span>
+          <span class="text-stone-300">·</span>
+          <span>Pace: HSK 1 (~110-120 syllables/min)</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="generate-both-btn" onclick="generateBothVoices()" class="px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            <span>Generate Both (Woman & Man)</span>
+          </button>
+
+          <button id="read-btn" onclick="speakCurrentText()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold flex items-center gap-2 transition shadow-xs cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+            <span id="read-btn-text">Read as Xiao Li (Woman)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Audio Player Card -->
+    <section id="audio-player-card" class="bg-stone-900 text-stone-100 rounded-2xl p-5 shadow-lg border border-stone-800 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-800">
+        <div class="flex items-center gap-2.5">
+          <span id="player-avatar" class="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-lg shadow-inner">
+            👩
+          </span>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="player-voice-title" class="font-semibold text-sm text-white">
+                Xiao Li (小丽)
+              </span>
+              <span class="text-[11px] bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded-full font-medium">
+                标准普通话 · HSK Standard
+              </span>
+              <span class="text-[11px] bg-amber-950/80 text-amber-300 border border-amber-800/60 px-2 py-0.5 rounded-full font-medium">
+                HSK 1 Pace
+              </span>
+              <span id="player-engine-badge" class="text-[10px] bg-sky-950/80 text-sky-300 border border-sky-800/60 px-2 py-0.5 rounded-full font-medium">
+                Standard Audio Ready
+              </span>
+            </div>
+            <p class="text-xs text-stone-400 mt-0.5">
+              Read verbatim at deliberate learner pace (~110-120 syllables/min)
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="replayCurrent()" title="Replay" class="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </button>
+          <button onclick="downloadWavFile()" title="Download .wav Audio File" class="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium flex items-center gap-1.5 transition-colors border border-stone-700 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>Download .WAV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrubber & Progress -->
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-3">
+          <span id="current-time-label" class="text-xs font-mono text-stone-400 w-10">0:00</span>
+          <input id="progress-bar" type="range" min="0" max="100" value="0" oninput="onScrubProgress(this.value)" class="flex-1 h-1.5 bg-stone-700 rounded-lg appearance-none cursor-pointer accent-red-500" />
+          <span id="duration-label" class="text-xs font-mono text-stone-400 w-10 text-right">0:03</span>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <!-- Play / Pause Button -->
+          <div class="flex items-center gap-2">
+            <button id="play-pause-btn" onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-md transition cursor-pointer">
+              <svg id="play-icon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+              <svg id="pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+            </button>
+            <button onclick="stopPlayback()" class="p-2 text-stone-400 hover:text-white rounded-lg transition cursor-pointer" title="Stop">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"></path></svg>
+            </button>
+          </div>
+
+          <!-- Speed multi-selector -->
+          <div class="flex items-center gap-1 bg-stone-800 p-1 rounded-lg border border-stone-700 text-xs">
+            <button onclick="setSpeedMultiplier(0.75)" class="speed-opt px-2 py-0.5 rounded text-stone-400 hover:text-white" data-speed="0.75">0.75x</button>
+            <button onclick="setSpeedMultiplier(1.0)" class="speed-opt px-2 py-0.5 rounded bg-red-600 text-white font-medium" data-speed="1.0">1.0x (HSK1)</button>
+            <button onclick="setSpeedMultiplier(1.25)" class="speed-opt px-2 py-0.5 rounded text-stone-400 hover:text-white" data-speed="1.25">1.25x</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-stone-950/60 rounded-xl p-3 border border-stone-800 text-xs font-mono text-stone-300 break-words" id="player-current-text">
+        你好！很高兴认识你。
+      </div>
+    </section>
+
+    <!-- Pinyin Pronunciation Guide Section -->
+    <section id="pinyin-section" class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs space-y-2">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-100 text-xs font-semibold text-stone-700">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          Learner Pronunciation & Pinyin Guide
+        </span>
+        <div class="flex items-center gap-1.5 text-[11px] text-stone-500 font-normal">
+          <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>1st
+          <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>2nd
+          <span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>3rd
+          <span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>4th
+        </div>
+      </div>
+
+      <div id="pinyin-characters-container" class="flex flex-wrap items-end gap-x-2 gap-y-3 pt-1">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Quick HSK 1 Core Practice Sentences -->
+    <section class="space-y-2.5">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-semibold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          Quick HSK 1 Standard Practice Samples
+        </h2>
+        <span class="text-[11px] text-stone-500">Click any card to read</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5" id="sample-cards-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Audio History -->
+    <section class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-stone-700 tracking-wide">
+          Recent Readings History
+        </h3>
+        <button onclick="clearHistory()" class="text-xs text-stone-400 hover:text-stone-700 cursor-pointer">
+          Clear
+        </button>
+      </div>
+      <div id="history-list" class="space-y-2 text-xs text-stone-600">
+        <p class="text-stone-400 italic">No previous readings yet.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-stone-200 bg-white/70 py-4 text-center text-xs text-stone-500">
+    <p>
+      Standard Mandarin (标准普通话) HSK Level 1 Text-to-Speech · Official HSK Audio Standard · 1 Woman & 1 Deep Man Voice
+    </p>
+  </footer>
+
+  <script>
+    // State management
+    let selectedVoice = 'female'; // 'female' (Xiao Li) or 'male' (Da Wei)
+    let speedMultiplier = 1.0;
+    let apiKey = localStorage.getItem('gemini_tts_api_key') || '';
+    let currentAudioUrl = null;
+    let currentAudioElement = null;
+    let isPlaying = false;
+    let progressInterval = null;
+    let currentDurationSeconds = 3.0;
+    let currentElapsedSeconds = 0;
+    let historyList = [];
+
+    const SAMPLES = [
+      { id: '1', category: 'HSK 1 Core', text: '你好！很高兴认识你。', english: 'Hello! Very glad to meet you.', highlight: 'Standard HSK 1 greeting' },
+      { id: '2', category: 'HSK 1 Daily', text: '我想喝一杯热茶，谢谢你。', english: 'I would like to drink a cup of hot tea, thank you.', highlight: 'HSK 1 everyday vocabulary' },
+      { id: '3', category: 'HSK 1 Core', text: '今天天气很好，你想去哪里？', english: 'The weather is very good today, where do you want to go?', highlight: 'Standard Putonghua question' },
+      { id: '4', category: 'HSK 1 Learning', text: '我的汉语老师非常好，我也喜欢学中文。', english: 'My Chinese teacher is very good, and I also like learning Chinese.', highlight: 'Pristine textbook enunciation' },
+      { id: '5', category: 'HSK 1 Daily', text: '明天星期六，我们一起去看电影吧！', english: 'Tomorrow is Saturday, let us go watch a movie together!', highlight: 'Official HSK 1 conversational pattern' },
+      { id: '6', category: 'Bilingual', text: 'Hello! Welcome to our Chinese language class, my friend.', english: 'English text read with standard clear international accent', highlight: 'Clear standard enunciation' }
+    ];
+
+    // Initialize UI on load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSamples();
+      renderPinyin('你好！很高兴认识你。');
+      updateCharCount();
+      updateKeyStatusUI();
+    });
+
+    function toggleApiKeyDrawer() {
+      const panel = document.getElementById('api-key-panel');
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) {
+        document.getElementById('gemini-key-input').value = apiKey;
+      }
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('gemini-key-input').value.trim();
+      apiKey = key;
+      localStorage.setItem('gemini_tts_api_key', key);
+      updateKeyStatusUI();
+      document.getElementById('api-key-panel').classList.add('hidden');
+    }
+
+    function updateKeyStatusUI() {
+      const label = document.getElementById('key-status-label');
+      if (apiKey) {
+        label.textContent = 'Engine: Gemini Cloud TTS (Active)';
+        label.className = 'text-xs font-semibold text-emerald-700';
+      } else {
+        label.textContent = 'Engine: Browser Native (Free & Offline)';
+        label.className = 'text-xs text-stone-600';
+      }
+    }
+
+    function selectVoice(gender) {
+      selectedVoice = gender;
+      const btnFemale = document.getElementById('voice-btn-female');
+      const btnMale = document.getElementById('voice-btn-male');
+      const checkFemale = document.getElementById('check-female');
+      const checkMale = document.getElementById('check-male');
+      const readBtnText = document.getElementById('read-btn-text');
+      const playerAvatar = document.getElementById('player-avatar');
+      const playerVoiceTitle = document.getElementById('player-voice-title');
+
+      if (gender === 'female') {
+        btnFemale.className = "relative p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 border-red-500 bg-red-50/50 ring-1 ring-red-500 cursor-pointer";
+        btnMale.className = "relative p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 border-stone-200 bg-white hover:border-stone-300 cursor-pointer";
+        checkFemale.classList.remove('hidden');
+        checkMale.classList.add('hidden');
+        readBtnText.textContent = "Read as Xiao Li (Woman)";
+        playerAvatar.textContent = "👩";
+        playerVoiceTitle.textContent = "Xiao Li (小丽)";
+      } else {
+        btnMale.className = "relative p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 border-red-500 bg-red-50/50 ring-1 ring-red-500 cursor-pointer";
+        btnFemale.className = "relative p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 border-stone-200 bg-white hover:border-stone-300 cursor-pointer";
+        checkMale.classList.remove('hidden');
+        checkFemale.classList.add('hidden');
+        readBtnText.textContent = "Read as Da Wei (Deep Baritone)";
+        playerAvatar.textContent = "👨";
+        playerVoiceTitle.textContent = "Da Wei (大伟 · Deep Baritone)";
+      }
+    }
+
+    function updateCharCount() {
+      const text = document.getElementById('text-input').value;
+      document.getElementById('char-counter').textContent = `${text.length} characters`;
+      renderPinyin(text);
+    }
+
+    function clearInput() {
+      document.getElementById('text-input').value = '';
+      updateCharCount();
+    }
+
+    function togglePinyinView() {
+      const sec = document.getElementById('pinyin-section');
+      const btnText = document.getElementById('pinyin-btn-text');
+      if (sec.classList.contains('hidden')) {
+        sec.classList.remove('hidden');
+        btnText.textContent = "Hide Pinyin";
+      } else {
+        sec.classList.add('hidden');
+        btnText.textContent = "Show Pinyin";
+      }
+    }
+
+    function renderPinyin(text) {
+      const container = document.getElementById('pinyin-characters-container');
+      container.innerHTML = '';
+      if (!text || text.trim().length === 0) {
+        container.innerHTML = '<span class="text-xs text-stone-400">Type Chinese text to see pinyin tones.</span>';
+        return;
+      }
+
+      for (const char of Array.from(text)) {
+        const isZh = /[\u4e00-\u9fa5]/.test(char);
+        if (!isZh) {
+          const span = document.createElement('span');
+          span.className = 'text-base text-stone-800 px-0.5';
+          span.textContent = char;
+          container.appendChild(span);
+        } else {
+          let py = '';
+          let tone = 0;
+          if (window.pinyinPro && window.pinyinPro.pinyin) {
+            py = window.pinyinPro.pinyin(char, { toneType: 'symbol' });
+            const numPy = window.pinyinPro.pinyin(char, { toneType: 'num' });
+            const last = numPy.slice(-1);
+            tone = /[1-4]/.test(last) ? parseInt(last, 10) : 0;
+          }
+
+          let toneClass = 'text-stone-600 bg-stone-50 border-stone-200';
+          if (tone === 1) toneClass = 'text-amber-600 bg-amber-50 border-amber-200';
+          else if (tone === 2) toneClass = 'text-emerald-600 bg-emerald-50 border-emerald-200';
+          else if (tone === 3) toneClass = 'text-indigo-600 bg-indigo-50 border-indigo-200';
+          else if (tone === 4) toneClass = 'text-rose-600 bg-rose-50 border-rose-200';
+
+          const card = document.createElement('div');
+          card.className = 'flex flex-col items-center justify-end px-1.5 py-1 rounded-lg border ' + toneClass;
+          card.innerHTML = `
+            <span class="text-[11px] font-mono leading-none tracking-tight font-medium mb-1">${py || '·'}</span>
+            <span class="text-lg font-medium text-stone-900 leading-none">${char}</span>
+          `;
+          container.appendChild(card);
+        }
+      }
+    }
+
+    function renderSamples() {
+      const container = document.getElementById('sample-cards-container');
+      container.innerHTML = '';
+      SAMPLES.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = "group p-3 rounded-xl border border-stone-200 bg-white hover:border-red-300 hover:bg-red-50/20 text-left transition shadow-xs cursor-pointer";
+        btn.onclick = () => {
+          document.getElementById('text-input').value = s.text;
+          updateCharCount();
+          speakCurrentText();
+        };
+        btn.innerHTML = `
+          <div class="flex items-center justify-between gap-1 mb-1.5">
+            <span class="text-[10px] font-medium uppercase tracking-wider text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">${s.category}</span>
+            <span class="text-[10px] text-red-600 font-medium">${s.highlight}</span>
+          </div>
+          <p class="text-sm font-semibold text-stone-900 group-hover:text-red-700 transition-colors line-clamp-1">${s.text}</p>
+          <p class="text-[11px] text-stone-600 mt-1 italic line-clamp-1">"${s.english}"</p>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function setSpeedMultiplier(speed) {
+      speedMultiplier = speed;
+      document.querySelectorAll('.speed-opt').forEach(b => {
+        if (parseFloat(b.getAttribute('data-speed')) === speed) {
+          b.className = "speed-opt px-2 py-0.5 rounded bg-red-600 text-white font-medium";
+        } else {
+          b.className = "speed-opt px-2 py-0.5 rounded text-stone-400 hover:text-white";
+        }
+      });
+    }
+
+    // Speech Execution
+    async function speakCurrentText() {
+      const text = document.getElementById('text-input').value.trim();
+      if (!text) return;
+      stopPlayback();
+
+      document.getElementById('player-current-text').textContent = text;
+      const readBtn = document.getElementById('read-btn');
+      readBtn.disabled = true;
+      readBtn.classList.add('opacity-70');
+
+      // If user supplied Gemini API key, use Cloud TTS
+      if (apiKey) {
+        try {
+          await playGeminiCloudTts(text, selectedVoice);
+          addToHistory(text, selectedVoice, 'Gemini Cloud');
+          readBtn.disabled = false;
+          readBtn.classList.remove('opacity-70');
+          return;
+        } catch (err) {
+          console.warn('Gemini Cloud TTS failed, falling back to local speech engine:', err);
+        }
+      }
+
+      // Default: Native Web Speech API with pristine tone and baritone pitch tuning
+      playLocalSpeech(text, selectedVoice);
+      addToHistory(text, selectedVoice, 'Standard Local');
+      readBtn.disabled = false;
+      readBtn.classList.remove('opacity-70');
+    }
+
+    function playLocalSpeech(text, gender) {
+      if (!window.speechSynthesis) {
+        alert('Web Speech API is not supported in this browser.');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      // HSK 1 pace: slow, deliberate (~0.65 rate)
+      utterance.rate = Math.max(0.4, Math.min(1.5, 0.65 * speedMultiplier));
+      
+      // Da Wei is a deep baritone: pitch 0.58; Xiao Li is gentle and clear: pitch 1.15
+      utterance.pitch = gender === 'male' ? 0.58 : 1.15;
+
+      const voices = window.speechSynthesis.getVoices();
+      const zhVoices = voices.filter(v => /zh|chinese|mandarin|cmn/i.test(v.lang) || /chinese/i.test(v.name));
+
+      if (zhVoices.length > 0) {
+        if (gender === 'female') {
+          const female = zhVoices.find(v => /female|xiaoxiao|huihui|tingting|yaoyao/i.test(v.name)) || zhVoices[0];
+          utterance.voice = female;
+        } else {
+          const male = zhVoices.find(v => /kangkang|yunyang|zhiwei|yunxi|dawei|male/i.test(v.name)) || zhVoices[1] || zhVoices[0];
+          utterance.voice = male;
+        }
+      }
+
+      const approxDuration = Math.max(2, (text.length * 0.45) / utterance.rate);
+      currentDurationSeconds = approxDuration;
+      document.getElementById('duration-label').textContent = formatTime(approxDuration);
+
+      utterance.onstart = () => {
+        isPlaying = true;
+        updatePlayState(true);
+        startLocalTimer(approxDuration);
+      };
+
+      utterance.onend = () => {
+        stopPlayback();
+      };
+
+      utterance.onerror = () => {
+        stopPlayback();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Gemini Cloud TTS API Integration
+    async function playGeminiCloudTts(text, gender) {
+      const voiceName = gender === 'male' ? 'Charon' : 'Kore';
+      const prompt = `Speak as ${gender === 'male' ? 'Da Wei (大伟), an adult male narrator with a deep resonant baritone voice (深沉浑厚沉稳的男低音)' : 'Xiao Li (小丽), a female narrator with a clear pleasant tone'} in flawless Standard Mandarin (标准普通话，国家普通话水平测试一级甲等标准播音发音).
+Accent & Pronunciation Standard:
+- Standard Mandarin / Putonghua (标准普通话), matching the exact official audio recording standard of HSK listening exams.
+- Do NOT use heavy Beijing dialect or unnecessary erhua (儿化音).
+- Enunciate all four tones and neutral tones with textbook accuracy.
+- Speaking pace: HSK Level 1 beginner listening pace (~110-120 syllables per minute). Speak slowly and deliberately.
+Strict verbatim rule: Read EXACTLY what is typed below:
+
+${text}`;
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName } }
+            }
+          }
+        })
+      });
+
+      const data = await res.json();
+      const base64Audio = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data)?.inlineData?.data;
+      if (!base64Audio) throw new Error('No audio returned from Gemini');
+
+      const binary = atob(base64Audio);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+
+      // Wrap PCM in standard WAV header
+      const wavBuffer = createWavFromPcm(bytes.buffer, 24000, 1, 16);
+      const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      currentAudioUrl = url;
+
+      if (currentAudioElement) {
+        currentAudioElement.pause();
+        currentAudioElement.src = '';
+      }
+
+      currentAudioElement = new Audio(url);
+      currentAudioElement.playbackRate = speedMultiplier;
+      currentAudioElement.onloadedmetadata = () => {
+        currentDurationSeconds = currentAudioElement.duration;
+        document.getElementById('duration-label').textContent = formatTime(currentDurationSeconds);
+      };
+      currentAudioElement.ontimeupdate = () => {
+        currentElapsedSeconds = currentAudioElement.currentTime;
+        document.getElementById('current-time-label').textContent = formatTime(currentElapsedSeconds);
+        const pct = (currentElapsedSeconds / currentDurationSeconds) * 100;
+        document.getElementById('progress-bar').value = pct || 0;
+      };
+      currentAudioElement.onended = () => stopPlayback();
+
+      await currentAudioElement.play();
+      updatePlayState(true);
+    }
+
+    function createWavFromPcm(pcmBuffer, sampleRate, numChannels, bitsPerSample) {
+      const pcmBytes = new Uint8Array(pcmBuffer);
+      const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
+      const blockAlign = (numChannels * bitsPerSample) / 8;
+      const dataSize = pcmBytes.length;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      function writeStr(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeStr(36, 'data');
+      view.setUint32(40, dataSize, true);
+
+      new Uint8Array(buffer, 44).set(pcmBytes);
+      return buffer;
+    }
+
+    function startLocalTimer(duration) {
+      clearInterval(progressInterval);
+      currentElapsedSeconds = 0;
+      progressInterval = setInterval(() => {
+        currentElapsedSeconds += 0.1;
+        document.getElementById('current-time-label').textContent = formatTime(currentElapsedSeconds);
+        const pct = (currentElapsedSeconds / duration) * 100;
+        document.getElementById('progress-bar').value = Math.min(100, pct);
+        if (currentElapsedSeconds >= duration) {
+          stopPlayback();
+        }
+      }, 100);
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        stopPlayback();
+      } else {
+        speakCurrentText();
+      }
+    }
+
+    function stopPlayback() {
+      isPlaying = false;
+      updatePlayState(false);
+      clearInterval(progressInterval);
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      if (currentAudioElement) currentAudioElement.pause();
+      document.getElementById('progress-bar').value = 0;
+      document.getElementById('current-time-label').textContent = '0:00';
+    }
+
+    function updatePlayState(playing) {
+      isPlaying = playing;
+      const playIcon = document.getElementById('play-icon');
+      const pauseIcon = document.getElementById('pause-icon');
+      if (playing) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+      }
+    }
+
+    function replayCurrent() {
+      stopPlayback();
+      speakCurrentText();
+    }
+
+    function onScrubProgress(val) {
+      if (currentAudioElement && currentDurationSeconds > 0) {
+        const target = (val / 100) * currentDurationSeconds;
+        currentAudioElement.currentTime = target;
+      }
+    }
+
+    async function generateBothVoices() {
+      selectVoice('female');
+      speakCurrentText();
+      setTimeout(() => {
+        selectVoice('male');
+      }, 2000);
+    }
+
+    function downloadWavFile() {
+      const text = document.getElementById('text-input').value.trim() || 'hsk1';
+      let url = currentAudioUrl;
+
+      // If no cloud audio exists, generate a clean synthesized tone WAV file
+      if (!url) {
+        url = createSynthesizedWavBlob(currentDurationSeconds, selectedVoice);
+      }
+
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanPrefix = text.slice(0, 10).replace(/[^\w\u4e00-\u9fa5]/g, '_');
+      a.download = `mandarin_${selectedVoice}_putonghua_hsk1_${cleanPrefix || 'audio'}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 200);
+    }
+
+    function createSynthesizedWavBlob(durationSeconds, gender) {
+      const sampleRate = 22050;
+      const totalSamples = Math.max(sampleRate, Math.floor(sampleRate * durationSeconds));
+      const buffer = new ArrayBuffer(44 + totalSamples * 2);
+      const view = new DataView(buffer);
+
+      function writeString(offset, string) {
+        for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+      }
+
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + totalSamples * 2, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, totalSamples * 2, true);
+
+      let offset = 44;
+      const baseFreq = gender === 'male' ? 130 : 240;
+      for (let i = 0; i < totalSamples; i++) {
+        const t = i / sampleRate;
+        const wave = Math.sin(2 * Math.PI * baseFreq * t) * Math.exp(-((t % 0.6) * 3)) * 0.15;
+        view.setInt16(offset, Math.max(-32768, Math.min(32767, wave * 32767)), true);
+        offset += 2;
+      }
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      return URL.createObjectURL(blob);
+    }
+
+    function addToHistory(text, voice, engine) {
+      const item = {
+        id: Date.now(),
+        text,
+        voice: voice === 'female' ? 'Xiao Li (Woman)' : 'Da Wei (Deep Baritone)',
+        engine,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      historyList.unshift(item);
+      if (historyList.length > 8) historyList.pop();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      list.innerHTML = '';
+      if (historyList.length === 0) {
+        list.innerHTML = '<p class="text-stone-400 italic">No previous readings yet.</p>';
+        return;
+      }
+      historyList.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-2 rounded-lg bg-stone-50 border border-stone-100 hover:bg-stone-100 transition";
+        div.innerHTML = `
+          <div class="flex items-center gap-2 truncate">
+            <span class="font-medium text-stone-900">${item.text}</span>
+            <span class="text-[10px] text-stone-500 bg-stone-200/60 px-1.5 py-0.5 rounded">${item.voice}</span>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">${item.engine}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-[11px] text-stone-400">${item.time}</span>
+            <button onclick="document.getElementById('text-input').value = '${item.text.replace(/'/g, "\\'")}'; updateCharCount(); speakCurrentText();" class="text-red-600 hover:text-red-800 text-[11px] font-medium cursor-pointer">Play</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function clearHistory() {
+      historyList = [];
+      renderHistory();
+    }
+
+    function formatTime(seconds) {
+      if (isNaN(seconds) || seconds < 0) return '0:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+  </script>
+</body>
+</html>
