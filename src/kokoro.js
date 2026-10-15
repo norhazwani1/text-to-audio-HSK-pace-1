@@ -9,69 +9,88 @@ let currentAudioUrl = null;
 const section = document.createElement("section");
 section.className = "max-w-3xl mx-auto my-10 p-6 rounded-2xl border";
 section.innerHTML = `
-  <h2 class="text-2xl font-bold mb-2">Kokoro Mandarin Audio</h2>
+  <h2 class="text-2xl font-bold mb-2">Kokoro Bilingual Audio Studio</h2>
   <p class="text-sm mb-4">
-    Jana audio Mandarin dan muat turun sebagai WAV.
+    Masukkan satu ayat bagi setiap baris. Sistem akan memilih
+    suara berdasarkan bahasa ayat.
   </p>
 
-  <label class="block font-semibold mb-2" for="kokoroText">
-    Teks Mandarin
-  </label>
-  <textarea id="kokoroText"
-    class="w-full border rounded-xl p-3 mb-4"
-    rows="5">你好！欢迎参加汉语听力考试。</textarea>
+  <label class="block font-semibold mb-2">Teks Mandarin dan English</label>
+  <textarea id="kText" class="w-full border rounded-xl p-3 mb-4"
+    rows="8" placeholder="大家好！欢迎参加听力考试。&#10;Hello, everyone! Welcome to the listening test."></textarea>
 
-  <label class="block font-semibold mb-2" for="kokoroVoice">
-    Pilih suara
-  </label>
-  <select id="kokoroVoice" class="w-full border rounded-xl p-3 mb-4">
-    <option value="zf_001">Suara perempuan</option>
-    <option value="zm_009">Suara lelaki</option>
-  </select>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label class="block font-semibold mb-2">Suara Mandarin</label>
+      <select id="kZhVoice" class="w-full border rounded-xl p-3">
+        <option value="zf_001">Perempuan</option>
+        <option value="zm_009">Lelaki</option>
+      </select>
+    </div>
+    <div>
+      <label class="block font-semibold mb-2">Suara English</label>
+      <select id="kEnVoice" class="w-full border rounded-xl p-3">
+        <option value="af_maple">English perempuan — Maple</option>
+        <option value="af_sol">English perempuan — Sol</option>
+        <option value="bf_vale">English perempuan — Vale</option>
+      </select>
+    </div>
+  </div>
 
-  <label class="block font-semibold mb-2" for="kokoroSpeed">
-    Kelajuan: <span id="kokoroSpeedLabel">1.0</span>
-  </label>
-  <input id="kokoroSpeed" type="range" min="0.5" max="1.5"
-    step="0.1" value="1" class="w-full mb-4">
+  <div class="mt-5">
+    <label class="block font-semibold mb-2">
+      Kelajuan: <span id="kSpeedLabel">1.0x</span>
+    </label>
+    <input id="kSpeed" type="range" min="0.5" max="1.5"
+      step="0.1" value="1" class="w-full">
+  </div>
 
-  <button id="kokoroGenerate"
-    class="bg-blue-600 text-white rounded-xl px-5 py-3 font-semibold">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+    <div>
+      <label class="block font-semibold mb-2">Jeda antara ayat (saat)</label>
+      <input id="kSentenceGap" type="number" min="0" max="30"
+        step="0.5" value="2" class="w-full border rounded-xl p-3">
+    </div>
+    <div>
+      <label class="block font-semibold mb-2">Ulangan setiap ayat</label>
+      <input id="kRepeats" type="number" min="1" max="10"
+        step="1" value="1" class="w-full border rounded-xl p-3">
+    </div>
+    <div>
+      <label class="block font-semibold mb-2">Jeda antara ulangan (saat)</label>
+      <input id="kRepeatGap" type="number" min="0" max="30"
+        step="0.5" value="2" class="w-full border rounded-xl p-3">
+    </div>
+  </div>
+
+  <button id="kGenerate"
+    class="mt-5 bg-blue-600 text-white rounded-xl px-5 py-3 font-semibold">
     Jana Audio WAV
   </button>
 
-  <p id="kokoroStatus" class="my-4 text-sm" aria-live="polite">
+  <p id="kStatus" class="my-4 text-sm" aria-live="polite">
     Sedia untuk menjana audio.
   </p>
-
-  <audio id="kokoroPlayer" controls class="w-full mb-3"></audio>
-
-  <a id="kokoroDownload"
-    class="hidden text-blue-700 underline font-semibold"
-    download="mandarin-kokoro.wav">
-    Muat turun audio WAV
-  </a>
+  <audio id="kPlayer" controls class="w-full mb-3"></audio>
+  <a id="kDownload" class="hidden text-blue-700 underline font-semibold"
+    download="bilingual-listening-test.wav">Muat turun WAV</a>
 `;
 
 document.body.appendChild(section);
 
-const textInput = document.getElementById("kokoroText");
-const voiceInput = document.getElementById("kokoroVoice");
-const speedInput = document.getElementById("kokoroSpeed");
-const speedLabel = document.getElementById("kokoroSpeedLabel");
-const generateButton = document.getElementById("kokoroGenerate");
-const status = document.getElementById("kokoroStatus");
-const player = document.getElementById("kokoroPlayer");
-const downloadLink = document.getElementById("kokoroDownload");
+const $ = id => document.getElementById(id);
+const status = $("kStatus");
+const button = $("kGenerate");
 
-speedInput.addEventListener("input", () => {
-  speedLabel.textContent = Number(speedInput.value).toFixed(1);
+$("kSpeed").addEventListener("input", () => {
+  $("kSpeedLabel").textContent =
+    Number($("kSpeed").value).toFixed(1) + "x";
 });
 
-async function loadKokoro() {
+async function loadTTS() {
   if (tts) return tts;
 
-  status.textContent = "Memuatkan model Kokoro. Kali pertama mungkin mengambil masa...";
+  status.textContent = "Memuatkan model suara. Kali pertama mungkin mengambil masa...";
 
   try {
     tts = await KokoroTTS.from_pretrained(MODEL_ID, {
@@ -79,11 +98,8 @@ async function loadKokoro() {
       device: "webgpu",
       voicePath: "/kokoro/voices"
     });
-  } catch (webgpuError) {
-    console.warn("WebGPU gagal; cuba WASM.", webgpuError);
-
-    status.textContent = "Mencuba mod keserasian WASM...";
-
+  } catch (error) {
+    console.warn("WebGPU gagal; mencuba WASM.", error);
     tts = await KokoroTTS.from_pretrained(MODEL_ID, {
       dtype: "fp32",
       device: "wasm",
@@ -120,48 +136,105 @@ function makeWavBlob(samples, sampleRate) {
 
   for (let i = 0; i < samples.length; i++) {
     const sample = Math.max(-1, Math.min(1, samples[i]));
-    const pcm = sample < 0 ? sample * 32768 : sample * 32767;
-    view.setInt16(44 + i * 2, pcm, true);
+    view.setInt16(44 + i * 2,
+      sample < 0 ? sample * 32768 : sample * 32767, true);
   }
 
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-generateButton.addEventListener("click", async () => {
-  const text = textInput.value.trim();
+function silence(seconds, sampleRate) {
+  return new Float32Array(Math.round(seconds * sampleRate));
+}
 
-  if (!text) {
-    status.textContent = "Sila masukkan teks Mandarin dahulu.";
+function isChineseLine(text) {
+  return /[\u3400-\u4DBF\u4E00-\u9FFF]/.test(text);
+}
+
+button.addEventListener("click", async () => {
+  const lines = $("kText").value
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length) {
+    status.textContent = "Sila masukkan teks dahulu.";
     return;
   }
 
-  generateButton.disabled = true;
-  downloadLink.classList.add("hidden");
+  const sentenceGap = Math.max(0, Math.min(30,
+    Number($("kSentenceGap").value) || 0));
+  const repeatGap = Math.max(0, Math.min(30,
+    Number($("kRepeatGap").value) || 0));
+  const repeats = Math.max(1, Math.min(10,
+    Math.floor(Number($("kRepeats").value) || 1)));
+  const speed = Number($("kSpeed").value);
+  const zhVoice = $("kZhVoice").value;
+  const enVoice = $("kEnVoice").value;
+
+  button.disabled = true;
+  $("kDownload").classList.add("hidden");
 
   try {
-    const engine = await loadKokoro();
+    const engine = await loadTTS();
+    const parts = [];
+    let sampleRate = 24000;
 
-    status.textContent = "Menjana suara Mandarin...";
-    const audio = await engine.generate(text, {
-      voice: voiceInput.value,
-      speed: Number(speedInput.value)
-    });
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const voice = isChineseLine(line) ? zhVoice : enVoice;
 
-    const wavBlob = makeWavBlob(audio.audio, audio.sampling_rate);
+      status.textContent =
+        `Menjana ayat ${i + 1} daripada ${lines.length}...`;
+
+      const result = await engine.generate(line, {
+        voice,
+        speed
+      });
+
+      const samples = result.audio;
+      sampleRate = result.sampling_rate;
+
+      for (let r = 0; r < repeats; r++) {
+        parts.push(samples);
+
+        if (r < repeats - 1 && repeatGap > 0) {
+          parts.push(silence(repeatGap, sampleRate));
+        }
+      }
+
+      if (i < lines.length - 1 && sentenceGap > 0) {
+        parts.push(silence(sentenceGap, sampleRate));
+      }
+    }
+
+    const totalLength = parts.reduce(
+      (sum, part) => sum + part.length, 0
+    );
+    const combined = new Float32Array(totalLength);
+    let offset = 0;
+
+    for (const part of parts) {
+      combined.set(part, offset);
+      offset += part.length;
+    }
+
+    const blob = makeWavBlob(combined, sampleRate);
 
     if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-    currentAudioUrl = URL.createObjectURL(wavBlob);
+    currentAudioUrl = URL.createObjectURL(blob);
 
-    player.src = currentAudioUrl;
-    downloadLink.href = currentAudioUrl;
-    downloadLink.classList.remove("hidden");
+    $("kPlayer").src = currentAudioUrl;
+    $("kDownload").href = currentAudioUrl;
+    $("kDownload").classList.remove("hidden");
 
-    status.textContent = "Audio siap! Tekan Play untuk mendengar atau muat turun WAV.";
+    status.textContent =
+      "Audio siap. Sila dengar dahulu sebelum memuat turun WAV.";
   } catch (error) {
     console.error(error);
     status.textContent =
-      "Audio gagal dijana. Semak sambungan internet, fail suara dan Console jika masalah berterusan.";
+      "Gagal menjana audio. Buka Console untuk melihat ralat.";
   } finally {
-    generateButton.disabled = false;
+    button.disabled = false;
   }
 });
